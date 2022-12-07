@@ -37,16 +37,16 @@ const config = {
     allowEmpty: true,
     disableEditor: true,
     drawOnSingleClick: true
-  };
-  
-  var anno = OpenSeadragon.Annotorious(viewer,config);
-  //anno.loadAnnotations('annotations.w3c.json');
-  anno.allowEmpty = true;
-  
-  anno.on('createAnnotation', function (a) {
-      //console.info(a.target.selector.value)
-  });
-  
-  anno.on('updateAnnotation', function (a) {
+};
+
+var anno = OpenSeadragon.Annotorious(viewer, config);
+//anno.loadAnnotations('annotations.w3c.json');
+anno.allowEmpty = true;
+
+anno.on('createAnnotation', function (a) {
     //console.info(a.target.selector.value)
-  });
+});
+
+anno.on('updateAnnotation', function (a) {
+    //console.info(a.target.selector.value)
+});
