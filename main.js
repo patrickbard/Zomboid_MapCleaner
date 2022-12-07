@@ -1,8 +1,12 @@
 document.getElementById('addToFolder').addEventListener('click', async () => {
+    toggleProgressbar(true, false);
+
     let coordinates = await getFileArray();
     let lineArray = CreateLineArray(coordinates);
     let rectList = LineArrayToRectanglesArray(lineArray);
     drawRectangles(rectList);
+
+    toggleProgressbar(false);
 });
 
 document.getElementById('test').addEventListener('click', async () => {
@@ -55,7 +59,7 @@ document.getElementById('test').addEventListener('click', async () => {
                     console.error(e)
                 }
             }
-            updateProgressBar(filesToCheck, filesChecked, areasToClear, currentAreaBeingCleared)
+            updateProgressBarWhenRemovingFiles(filesToCheck, filesChecked, areasToClear, currentAreaBeingCleared)
         }
         currentAreaBeingCleared++;
     }

@@ -86,23 +86,84 @@ function coordinateToFileName(x, y, filetype) {
     }
 }
 
-function toggleProgressbar(state) {
+function toggleProgressbar(state, all = true) {
+    let overlayElement = document.getElementById("overlay")
+    let progressElements = document.getElementsByClassName("progress")
+
     if (state) {
-        document.getElementById("overlay").style.display = "block";
-        //document.getElementById("wrapper").classList.remove("d-none");
+        overlayElement.style.display = "block"
+        
+        if (!all) {
+            for (const element of progressElements) {
+                if (element.id !== "OverallProgress") {
+                    element.style.display = "none"
+                }
+            }
+        }
+
+        let progressBarLegendElement = document.getElementById("OverallProgressBarLegend")
+        progressBarLegendElement.innerText = "Loading...";
     } else {
-        document.getElementById("overlay").style.display = "none";
-        //document.getElementById("wrapper").classList.add("d-none");
+        for (const element of progressElements) {
+            element.style.display = ""
+        }
+
+        overlayElement.style.display = "none";
     }
 }
 
-function updateProgressBar(FilesToCheck, filesChecked, AreasToClear, areasCleared) {
-    CurrentProgress = Math.floor(filesChecked / FilesToCheck * 100)
-    MainProgress = Math.floor(areasCleared / AreasToClear * 100)
-    MainProgressbar = document.getElementById("OverallprogressBar")
-    CurrentprogressBar = document.getElementById("CurrentprogressBar")
-    MainProgressbar.innerText = "Areas cleared " + areasCleared + "/" + AreasToClear;
-    CurrentprogressBar.innerText = "Current Area " + CurrentProgress + "%";
-    CurrentprogressBar.style.width = CurrentProgress + "%";
-    MainProgressbar.style.width = MainProgress + "%";
+function genericProgressBarUpdate(elementId, processed, total = 0, options) {
+    let progressBarElement = document.getElementById(elementId)
+    let progressBarLegendElement = document.getElementById(`${ elementId }Legend`)
+
+    progressBarLegendElement.innerText = options.legend || "Processed";
+    progressBarElement.innerText = `${processed}`
+    progressBarElement.style.width = `100%`;
+
+    if (total > 0) {
+        let progress = Math.floor(processed / total * 100)
+        progressBarElement.innerText = `${progress}%`
+        progressBarElement.style.width = `${progress}%`;
+
+        if (options) {
+            progressBarElement.innerText = options.displayAsPercent
+                ? options.messageFormat.format(progress)
+                : options.messageFormat.format(processed, total);
+        }
+    }
 }
+
+
+function updateProgressBarWhenRemovingFiles(filesToCheck, filesChecked, areasToClear, areasCleared) {
+    let optionsOverall = {
+        legend: "Areas cleared",
+        messageFormat: "{0}/{1}",
+        displayAsPercent: false
+    }
+    let optionsCurrent = {
+        legend: "Current Area",
+        messageFormat: "{0}%",
+        displayAsPercent: true
+    }
+
+    genericProgressBarUpdate("OverallProgressBar", areasCleared, areasToClear, optionsOverall)
+    genericProgressBarUpdate("CurrentProgressBar", filesChecked, filesToCheck, optionsCurrent)
+}
+
+function updateProgressBarWhenLoadingFiles(filesToCheck, filesChecked) {
+    let options = {
+        legend: "Files read",
+        messageFormat: "{0}/{1}",
+        displayAsPercent: false
+    }
+
+    genericProgressBarUpdate("OverallProgressBar", filesToCheck, filesChecked, options)
+}
+
+
+String.prototype.format = function() {
+    let args = arguments;
+    return this.replace(/{(\d+)}/g, function(match, number) {
+        return typeof args[number] != 'undefined' ? args[number] : match;
+    });
+};

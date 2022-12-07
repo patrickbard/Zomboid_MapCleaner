@@ -18,10 +18,14 @@ async function getFileArray(update = false) {
                     coords.push(currentCoord)
                 }
             }
+            count++;
+
+            updateProgressBarWhenLoadingFiles(count)
         }
         return coords;
     } catch (e) {
         console.error(e);
+        toggleProgressbar(false);
     }
 }
 

@@ -23,17 +23,28 @@
     <div id="overlay">
         <div class="h-100 row align-items-center">
             <div class="col-6 offset-md-3">
-                <div class="progress" style="height: 60px;">
-                    <div id="OverallprogressBar" class="progress-bar progress-bar-striped progress-bar-animated display-4" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
+                <div id="OverallProgress" class="progress" style="height: 30px;">
+                    <div id="OverallProgressBar" class="progress-bar progress-bar-striped progress-bar-animated display-4"
+                         role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
                         Areas cleared
                     </div>
-                    <div id="CurrentprogressBar" class="progress-bar bg-info display-4" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    <span id="OverallProgressBarLegend" class="progress-legend">
+                        
+                    </span>
+                </div>
+                <div id="CurrentProgress" class="progress" style="height: 30px;">
+                    <div id="CurrentProgressBar" class="progress-bar bg-info display-4" role="progressbar"
+                         style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
                         Current Area 0%
                     </div>
+                    <span id="CurrentProgressBarLegend" class="progress-legend">
+                        
+                    </span>
                 </div>
             </div>
         </div>
     </div>
+
     <div id="wrapper" class="wrapper">
         <div class="container min-vh-100 min-vw-100 d-flex flex-column">
             <div class="row header bg-primary">
