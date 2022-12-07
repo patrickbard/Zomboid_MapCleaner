@@ -10,8 +10,11 @@ window.viewer = OpenSeadragon({
     id: "openseadragon1",
     prefixUrl: "openseadragon/images/",
     tileSources: zomify,
-
-    maxZoomLevel: 50
+    maxZoomLevel: 50,
+    gestureSettingsMouse: {
+        clickToZoom: false,
+        dblClickToZoom: true
+    }
 });
 
 const positionEl = document.querySelectorAll('.position')[0];
@@ -47,6 +50,11 @@ annotorious.allowEmpty = true;
 
 annotorious.on('createAnnotation', function (a) {
     //console.info(a.target.selector.value)
+});
+
+annotorious.on('createSelection', function (a) {
+    console.info(a.target.selector.value)
+    annotorious.saveSelected()
 });
 
 annotorious.on('updateAnnotation', function (a) {
