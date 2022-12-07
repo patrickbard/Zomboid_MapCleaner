@@ -1,5 +1,13 @@
 .footer {
-    min-height: 100px;
+    min-height: 5vh;
+}
+
+.header-center {
+    text-align: center;
+}
+
+#coordinates-text {
+    font-family: monospace;
 }
 
 #overlay {

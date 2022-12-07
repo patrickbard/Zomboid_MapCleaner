@@ -30,7 +30,12 @@ viewer.addHandler('open', function () {
             let zoom = viewer.viewport.getZoom(true);
             let imageZoom = viewer.viewport.viewportToImageZoom(zoom);
 
-            positionEl.innerHTML = 'Location: ' + makePZCoord(imagePoint.x) + ',' + makePZCoord(imagePoint.y);
+            let zomboidX = makePZCoord(imagePoint.x);
+            let zomboidY = makePZCoord(imagePoint.y);
+            let zomboidChunkX = Math.floor(zomboidX / 30);
+            let zomboidChunkY = Math.floor(zomboidY / 30);
+            
+            positionEl.innerHTML = `Location: ${ zomboidX },${ zomboidY } (Chunk: ${ zomboidChunkX },${ zomboidChunkY })`;
         }
     });
 
