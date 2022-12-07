@@ -69,8 +69,58 @@
                             <button id="addToFolder" type="button" class="btn btn-primary m-3">
                                 Select Save Folder
                             </button>
+
+                            <div class="card m-3">
+                                <div class="card-header h5">
+                                    Help
+                                </div>
+
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item">
+                                        <h6>Zoom</h6>
+                                        Mousewheel/Double Click
+                                    </li>
+                                    <li class="list-group-item">
+                                        <h6>Create a zone to delete files</h6>
+                                        Hold Shift + Drag Mouse
+                                    </li>
+                                    <li class="list-group-item">
+                                        <h6>Edit a zone</h6>
+                                        Click on zone, drag vertices
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="card m-3">
+                                <div class="card-header h5">
+                                    Display Zones
+                                </div>
+
+                                <div class="form-check m-2">
+                                    <input class="form-check-input zone-display-check" type="checkbox" value="" id="check_Mapdata_show" checked>
+                                    <label class="form-check-label" for="check_Mapdata_show">
+                                        Map Data
+                                    </label>
+                                </div>
+                                <div class="form-check m-2">
+                                    <input class="form-check-input zone-display-check" type="checkbox" value="" id="check_Chunkdata_show" checked>
+                                    <label class="form-check-label" for="check_Chunkdata_show">
+                                        Chunk Data
+                                    </label>
+                                </div>
+                                <div class="form-check m-2">
+                                    <input class="form-check-input zone-display-check" type="checkbox" value="" id="check_ZpopData_show" checked>
+                                    <label class="form-check-label" for="check_ZpopData_show">
+                                        Zpop Data
+                                    </label>
+                                </div>
+                            </div>
     
-                            <div class="card m-3" style="width: 18rem;">
+                            <div class="card m-3">
+                                <div class="card-header h5">
+                                    Files to Delete
+                                </div>
+
                                 <div class="form-check m-2">
                                     <input class="form-check-input" type="checkbox" value="" id="chk_Mapdata" checked>
                                     <label class="form-check-label" for="chk_Mapdata">
@@ -91,30 +141,9 @@
                                 </div>
                             </div>
     
-                            <button id="test" type="button" class="btn btn-primary m-3">
+                            <button id="test" type="button" class="btn btn-danger m-3">
                                 Delete Files
                             </button>
-    
-                            <div class="card m-3">
-                                <div class="card-header h4">
-                                    Keys and Stuff
-                                </div>
-    
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">
-                                        Zoom: Mousewheel
-                                    </li>
-                                    <li class="list-group-item">
-                                        Quick zoom: Double Click
-                                    </li>
-                                    <li class="list-group-item">
-                                        Create Delete Zone: Hold Shift + Drag Mouse
-                                    </li>
-                                    <li class="list-group-item bg-warning">
-                                        After adding delete zone click on the map to finalize before you can draw another one
-                                    </li>
-                                </ul>
-                            </div>
                         </div>
                         <div class="col-9 border" id="openseadragon1"></div>
                         <div class="col-1">

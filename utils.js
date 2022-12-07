@@ -16,6 +16,14 @@ class OverlayLine {
     }
 }
 
+const FILE_TYPE_PREFIX = {
+    MAP: "map_",
+    CHUNK: "chunkdata_",
+    ZOMBIE: "zpop_",
+};
+
+const getFileType = (val) => Object.entries(FILE_TYPE_PREFIX).find(([_, value]) => value === val)[0];
+
 function makePZCoord(coord) {
     let roundedString = Math.floor(coord).toString();
     let newLength = roundedString.length - 1;
@@ -31,16 +39,25 @@ function getCoordFromMapName(mapName) {
     return new ChunkCoordinate(array[0], array[1]);
 }
 
-function addOverlay(myViewer, annotationName, x, y, w, h) {
-    let rect = myViewer.viewport.imageToViewportRectangle(x * 10, y * 10, w, h);
+function getCoordFromChunkOrZombieFileName(fileName, filetype) {
+    fileName = fileName.replace(filetype, "");
+    fileName = fileName.replace(".bin", "");
+    const array = fileName.split("_");
+
+    return new ChunkCoordinate(array[0] * 30, array[1] * 30);
+}
+
+function addOverlay(myViewer, annotationName, filetype, color, x, y, w, h) {
+    let zoneOffset = 10
+    let rect = myViewer.viewport.imageToViewportRectangle(x * zoneOffset, y * zoneOffset, w, h);
     let element = document.createElement("div");
 
-    element.id = annotationName;
-    element.style.color = "rgba(0, 255, 0, 0.25)";
-    element.style.background = "rgba(0, 255, 0, 0.25)";
+    element.id = `${ filetype }${ annotationName }`;
+    element.className = `${filetype}zone`;
+    element.style.color = color;
+    element.style.background = color;
 
     this.viewer.addOverlay(element, rect);
-    //console.log("ADDED OVERLAY")
 }
 
 const sortByDistance = (coordinates, point) => {
@@ -72,17 +89,17 @@ function annotationCoordToPZCoord(annotationCoordinate) {
     return {startX: startX, startY: startY, endX: endX, endY: endY}
 }
 
-function coordinateToFileName(x, y, filetype) {
-    if (filetype == "M") {
-        return "map_" + x + "_" + y + ".bin";
-    } else if (filetype == "C") {
-        let cx = Math.floor(x / 30)
-        let cy = Math.floor(y / 30)
-        return "chunkdata_" + cx + "_" + cy + ".bin";
-    } else if (filetype == "Z") {
-        let cx = Math.floor(x / 30)
-        let cy = Math.floor(y / 30)
-        return "zpop_" + cx + "_" + cy + ".bin";
+function coordinateToFileName(x, y, filetypePrefix) {
+    if (getFileType(filetypePrefix) != null) {
+        let cx = x;
+        let cy = y;
+
+        if (filetypePrefix === FILE_TYPE_PREFIX.CHUNK || filetypePrefix === FILE_TYPE_PREFIX.ZOMBIE) {
+            cx = Math.floor(x / 30)
+            cy = Math.floor(y / 30)
+        }
+
+        return `${ filetypePrefix }${ cx }_${ cy }.bin`;
     }
 }
 

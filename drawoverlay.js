@@ -1,5 +1,9 @@
 async function getFileArray(update = false) {
-    let coords = [];
+    let coords = {
+        [FILE_TYPE_PREFIX.MAP]: [],
+        [FILE_TYPE_PREFIX.CHUNK]: [],
+        [FILE_TYPE_PREFIX.ZOMBIE]: []
+    };
 
     try {
         if (!update) {
@@ -8,20 +12,39 @@ async function getFileArray(update = false) {
             });
         }
 
-        let count = 0;
+        viewer.clearOverlays();
+        annotorious.clearAnnotations();
 
+        let count = 0;
         for await (const entry of directory.values()) {
-            if (entry.name.startsWith("map_")) {
+            if (entry.name.startsWith(FILE_TYPE_PREFIX.MAP)) {
                 let currentCoord = getCoordFromMapName(entry.name);
 
                 if (isNumeric(currentCoord.x)) {
-                    coords.push(currentCoord)
+                    coords[FILE_TYPE_PREFIX.MAP].push(currentCoord)
+                }
+            }
+
+            if (entry.name.startsWith(FILE_TYPE_PREFIX.CHUNK)) {
+                let currentCoord = getCoordFromChunkOrZombieFileName(entry.name, FILE_TYPE_PREFIX.CHUNK);
+
+                if (isNumeric(currentCoord.x)) {
+                    coords[FILE_TYPE_PREFIX.CHUNK].push(currentCoord)
+                }
+            }
+
+            if (entry.name.startsWith(FILE_TYPE_PREFIX.ZOMBIE)) {
+                let currentCoord = getCoordFromChunkOrZombieFileName(entry.name, FILE_TYPE_PREFIX.ZOMBIE);
+
+                if (isNumeric(currentCoord.x)) {
+                    coords[FILE_TYPE_PREFIX.ZOMBIE].push(currentCoord)
                 }
             }
             count++;
 
             updateProgressBarWhenLoadingFiles(count)
         }
+
         return coords;
     } catch (e) {
         console.error(e);
@@ -29,7 +52,7 @@ async function getFileArray(update = false) {
     }
 }
 
-function CreateLineArray(coords) {
+function CreateLineArray(coords, filetype) {
     let lineArray = [];
     let lastCoordinate = new ChunkCoordinate(0, 0);
     let currentCoordinate = new ChunkCoordinate(0, 0);
@@ -40,6 +63,7 @@ function CreateLineArray(coords) {
     let endX = 0;
     let endY = 0;
     let annotationName = "";
+    let coordinateGap = (filetype === FILE_TYPE_PREFIX.CHUNK || filetype === FILE_TYPE_PREFIX.ZOMBIE) ? 30 : 1
 
     coords.sort((a, b) => {
         return a.x - b.x;
@@ -49,7 +73,7 @@ function CreateLineArray(coords) {
         annotationName = coords[i].x + "-" + coords[i].y;
         currentCoordinate = coords[i];
 
-        if (currentCoordinate.x == lastCoordinate.x && currentCoordinate.y == parseInt(lastCoordinate.y, 10) + 1) {
+        if (currentCoordinate.x == lastCoordinate.x && currentCoordinate.y == parseInt(lastCoordinate.y, 10) + coordinateGap) {
             h = h + 10;
             endX = currentCoordinate.x;
             endY = currentCoordinate.y;
@@ -65,6 +89,10 @@ function CreateLineArray(coords) {
             endX = currentCoordinate.x;
             endY = currentCoordinate.y;
         }
+        
+        if (i === coords.length-1) {
+            lineArray.push(new OverlayLine(startX, startY, endX, endY));
+        }
 
         lastCoordinate = new ChunkCoordinate(currentCoordinate.x, currentCoordinate.y);
     }
@@ -72,12 +100,13 @@ function CreateLineArray(coords) {
     return lineArray;
 }
 
-function LineArrayToRectanglesArray(lineArray) {
+function LineArrayToRectanglesArray(lineArray, filetype) {
     let rectList = [];
     let lastLine;
     let newRect = {};
     let line = lineArray[0];
     let linesToSearch = lineArray.length;
+    let coordinateGap = (filetype === FILE_TYPE_PREFIX.CHUNK || filetype === FILE_TYPE_PREFIX.ZOMBIE) ? 30 : 1
 
     for (let i = 0; i < linesToSearch; i++) {
         if (!lastLine) {
@@ -89,9 +118,9 @@ function LineArrayToRectanglesArray(lineArray) {
             let sameStartY = line.startY === lastLine.startY
             let sameEndY = line.endY === lastLine.endY
 
-            if ((line.startX === (parsedLastLineStartX + 1)) && (sameStartY && sameEndY)) {
+            if ((line.startX == (parsedLastLineStartX + coordinateGap)) && (sameStartY && sameEndY)) {
                 newRect.endX = line.endX;
-            } else if ((line.startX === (parsedLastLineStartX - 1)) && (sameStartY && sameEndY)) {
+            } else if ((line.startX == (parsedLastLineStartX - coordinateGap)) && (sameStartY && sameEndY)) {
                 newRect.startX = line.startX;
             } else {
                 rectList.push(new OverlayLine(newRect.startX, newRect.startY, newRect.endX, newRect.endY));
@@ -109,6 +138,11 @@ function LineArrayToRectanglesArray(lineArray) {
         lastLine.endY = line.endY;
 
         lineArray.shift();
+        
+        if (lineArray.length === 0) {
+            rectList.push(new OverlayLine(newRect.startX, newRect.startY, newRect.endX, newRect.endY));
+        }
+        
         sortByDistance(lineArray, {x: lastLine.startX, y: lastLine.startY});
         line = lineArray[0];
     }
@@ -116,15 +150,16 @@ function LineArrayToRectanglesArray(lineArray) {
     return rectList;
 }
 
-function drawRectangles(rectList) {
+function drawRectangles(rectList, filetype, color) {
     let count = 0;
-    
+    let zoneSize = (filetype === FILE_TYPE_PREFIX.CHUNK || filetype === FILE_TYPE_PREFIX.ZOMBIE) ? 30 : 1
+
     for (let currentRect of rectList) {
-        let w = (currentRect.endX - parseInt(currentRect.startX, 10) + 1) * 10;
-        let h = (currentRect.endY - parseInt(currentRect.startY, 10) + 1) * 10;
-        //console.log(`adding rect ${currentRect.startX},${currentRect.startY},${w},${h}`);
-        addOverlay(viewer, count.toString(), currentRect.startX, currentRect.startY, w, h);
+        let w = (currentRect.endX - parseInt(currentRect.startX, 10) + (zoneSize)) * 10;
+        let h = (currentRect.endY - parseInt(currentRect.startY, 10) + (zoneSize)) * 10;
+        addOverlay(viewer, count.toString(), filetype, color, currentRect.startX, currentRect.startY, w, h);
         count++;
     }
-    //console.log("Rectangles drawn: " + rectList.length);
+
+    console.log("Rectangles drawn: " + rectList.length);
 }
