@@ -7,38 +7,39 @@ class ChunkCoordinate {
     }
 }
 
-class overlayLine {
-    constructor(sx, sy, ex, ey) {
-        this.sx = sx;
-        this.sy = sy;
-        this.ex = ex;
-        this.ey = ey;
+class OverlayLine {
+    constructor(startX, startY, endX, endY) {
+        this.startX = startX;
+        this.startY = startY;
+        this.endX = endX;
+        this.endY = endY;
     }
 }
 
 function makePZCoord(coord) {
-    var roundedstring = Math.floor(coord).toString();
-    var newlen = roundedstring.length - 1;
-    return roundedstring.slice(0, newlen)
+    let roundedString = Math.floor(coord).toString();
+    let newLength = roundedString.length - 1;
+
+    return roundedString.slice(0, newLength)
 }
 
-function getCoordFromMapName(Mapname) {
-    Mapname = Mapname.replace("map_", "");
-    Mapname = Mapname.replace(".bin", "");
-    const arr = Mapname.split("_");
-    let coord = new ChunkCoordinate(arr[0], arr[1]);
-    return coord;
+function getCoordFromMapName(mapName) {
+    mapName = mapName.replace("map_", "");
+    mapName = mapName.replace(".bin", "");
+    const array = mapName.split("_");
+
+    return new ChunkCoordinate(array[0], array[1]);
 }
 
-function addOverlay(myviewer, AnnoName, x, y, w, h) {
-    let rect = myviewer.viewport.imageToViewportRectangle(x * 10, y * 10, w, h);
-    var elt = document.createElement("div");
-    elt.id = AnnoName;
-    elt.style.color = "rgba(0, 255, 0, 0.25)";
-    elt.style.background = "rgba(0, 255, 0, 0.25)";
-    //elt.style.border = "1px solid #969696";
+function addOverlay(myViewer, annotationName, x, y, w, h) {
+    let rect = myViewer.viewport.imageToViewportRectangle(x * 10, y * 10, w, h);
+    let element = document.createElement("div");
 
-    this.viewer.addOverlay(elt, rect);
+    element.id = annotationName;
+    element.style.color = "rgba(0, 255, 0, 0.25)";
+    element.style.background = "rgba(0, 255, 0, 0.25)";
+
+    this.viewer.addOverlay(element, rect);
     //console.log("ADDED OVERLAY")
 }
 
@@ -47,9 +48,10 @@ const sortByDistance = (coordinates, point) => {
     coordinates.sort(sorter);
 };
 
-const distance = (coor1, coor2) => {
-    const x = coor2.x - coor1.sx;
-    const y = coor2.y - coor1.sy;
+const distance = (coordinate1, coordinate2) => {
+    const x = coordinate2.x - coordinate1.startX;
+    const y = coordinate2.y - coordinate1.startY;
+
     return Math.sqrt((x * x) + (y * y));
 };
 
@@ -57,17 +59,20 @@ function isNumeric(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
-function annoCoordToPZCoord(annocoord) {
-    annocoord = annocoord.replace("xywh=pixel:", "");
-    const arr = annocoord.split(",");
-    let sx = parseInt(arr[0].slice(0, arr[0].indexOf(".") - 1), 10);
-    let sy = parseInt(arr[1].slice(0, arr[1].indexOf(".") - 1), 10);
-    let ex = sx + Math.floor(arr[2].slice(0, arr[2].indexOf(".")) / 10)
-    let ey = sy + Math.floor(arr[3].slice(0, arr[3].indexOf(".")) / 10)
-    return {sx: sx, sy: sy, ex: ex, ey: ey}
+function annotationCoordToPZCoord(annotationCoordinate) {
+    annotationCoordinate = annotationCoordinate.replace("xywh=pixel:", "");
+    const array = annotationCoordinate.split(",");
+
+    let startX = parseInt(array[0].slice(0, array[0].indexOf(".") - 1), 10);
+    let startY = parseInt(array[1].slice(0, array[1].indexOf(".") - 1), 10);
+
+    let endX = startX + Math.floor(array[2].slice(0, array[2].indexOf(".")) / 10)
+    let endY = startY + Math.floor(array[3].slice(0, array[3].indexOf(".")) / 10)
+
+    return {startX: startX, startY: startY, endX: endX, endY: endY}
 }
 
-function CoordinateToFileName(x, y, filetype) {
+function coordinateToFileName(x, y, filetype) {
     if (filetype == "M") {
         return "map_" + x + "_" + y + ".bin";
     } else if (filetype == "C") {
@@ -81,7 +86,7 @@ function CoordinateToFileName(x, y, filetype) {
     }
 }
 
-function toggleprogressbar(state) {
+function toggleProgressbar(state) {
     if (state) {
         document.getElementById("overlay").style.display = "block";
         //document.getElementById("wrapper").classList.remove("d-none");

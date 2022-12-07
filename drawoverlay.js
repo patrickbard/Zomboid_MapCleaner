@@ -1,128 +1,126 @@
-async function getFilearr() {
-    //let directory;
-    let Coords = [];
+async function getFileArray(update = false) {
+    let coords = [];
+
     try {
-        directory = await window.showDirectoryPicker({
-            startIn: 'desktop'
-        });
+        if (!update) {
+            directory = await window.showDirectoryPicker({
+                startIn: 'desktop'
+            });
+        }
+
+        let count = 0;
 
         for await (const entry of directory.values()) {
             if (entry.name.startsWith("map_")) {
-                currentCoord = getCoordFromMapName(entry.name);
+                let currentCoord = getCoordFromMapName(entry.name);
+
                 if (isNumeric(currentCoord.x)) {
-                    Coords.push(currentCoord)
+                    coords.push(currentCoord)
                 }
             }
         }
-        return Coords;
+        return coords;
     } catch (e) {
-        console.log(e);
+        console.error(e);
     }
 }
 
-async function reloadFileArr() {
-    let Coords = [];
-    try {
-        for await (const entry of directory.values()) {
-            if (entry.name.startsWith("map_")) {
-                currentCoord = getCoordFromMapName(entry.name);
-                if (isNumeric(currentCoord.x)) {
-                    Coords.push(currentCoord)
-                }
-            }
-        }
-        return Coords;
-    } catch (e) {
-        console.log(e);
-    }
-}
-
-
-function CreateLineArray(Coords) {
-    let LineArr = [];
-    let lastcoord = new ChunkCoordinate(0, 0);
-    let currentCoord = new ChunkCoordinate(0, 0);
+function CreateLineArray(coords) {
+    let lineArray = [];
+    let lastCoordinate = new ChunkCoordinate(0, 0);
+    let currentCoordinate = new ChunkCoordinate(0, 0);
     let w = 0;
     let h = 0
-    let startx = 0;
-    let starty = 0;
-    let endx = 0;
-    let endy = 0;
-    let AnnoName = "";
-    Coords.sort((a, b) => {
+    let startX = 0;
+    let startY = 0;
+    let endX = 0;
+    let endY = 0;
+    let annotationName = "";
+
+    coords.sort((a, b) => {
         return a.x - b.x;
     });
 
-    for (let i = 0; i < Coords.length; i++) {
+    for (let i = 0; i < coords.length; i++) {
+        annotationName = coords[i].x + "-" + coords[i].y;
+        currentCoordinate = coords[i];
 
-        AnnoName = Coords[i].x + "-" + Coords[i].y;
-        currentCoord = Coords[i];
-
-        if (currentCoord.x == lastcoord.x && currentCoord.y == parseInt(lastcoord.y, 10) + 1) {
+        if (currentCoordinate.x == lastCoordinate.x && currentCoordinate.y == parseInt(lastCoordinate.y, 10) + 1) {
             h = h + 10;
-            lastcoord = new ChunkCoordinate(currentCoord.x, currentCoord.y);
-            endx = currentCoord.x;
-            endy = currentCoord.y;
-        } else if (startx <= 0) {
-            lastcoord = new ChunkCoordinate(currentCoord.x, currentCoord.y);
-            startx = currentCoord.x;
-            starty = currentCoord.y;
-            endx = currentCoord.x;
-            endy = currentCoord.y;
+            endX = currentCoordinate.x;
+            endY = currentCoordinate.y;
+        } else if (startX <= 0) {
+            startX = currentCoordinate.x;
+            startY = currentCoordinate.y;
+            endX = currentCoordinate.x;
+            endY = currentCoordinate.y;
         } else {
-            LineArr.push(new overlayLine(startx, starty, endx, endy));
-            lastcoord = new ChunkCoordinate(currentCoord.x, currentCoord.y);
-            startx = currentCoord.x;
-            starty = currentCoord.y;
-            endx = currentCoord.x;
-            endy = currentCoord.y;
+            lineArray.push(new OverlayLine(startX, startY, endX, endY));
+            startX = currentCoordinate.x;
+            startY = currentCoordinate.y;
+            endX = currentCoordinate.x;
+            endY = currentCoordinate.y;
         }
+
+        lastCoordinate = new ChunkCoordinate(currentCoordinate.x, currentCoordinate.y);
     }
-    return LineArr;
+
+    return lineArray;
 }
 
-function LineArrToRect(LineArr) {
+function LineArrayToRectanglesArray(lineArray) {
     let rectList = [];
-    let lastline;
-    let newRect;
-    let line = LineArr[0];
-    let LinesToSearch = LineArr.length;
+    let lastLine;
+    let newRect = {};
+    let line = lineArray[0];
+    let linesToSearch = lineArray.length;
 
-    for (let i = 0; i < LinesToSearch; i++) {
-        if (!lastline) {
-            line = LineArr[0];
-            newRect = new overlayLine(line.sx, line.sy, line.ex, line.ey);
-            lastline = new overlayLine(line.sx, line.sy, line.ex, line.ey);
-        } else if ((line.sx == parseInt(lastline.sx, 10) + 1) && (line.sy == lastline.sy && line.ey == lastline.ey)) {
-            newRect.ex = line.ex;
-        } else if ((line.sx == parseInt(lastline.sx, 10) - 1) && (line.sy == lastline.sy && line.ey == lastline.ey)) {
-            newRect.sx = line.sx;
+    for (let i = 0; i < linesToSearch; i++) {
+        if (!lastLine) {
+            line = lineArray[0];
+            newRect = new OverlayLine(line.startX, line.startY, line.endX, line.endY);
+            lastLine = new OverlayLine(line.startX, line.startY, line.endX, line.endY);
         } else {
-            rectList.push(new overlayLine(newRect.sx, newRect.sy, newRect.ex, newRect.ey));
-            newRect.sx = line.sx;
-            newRect.sy = line.sy;
-            newRect.ex = line.ex;
-            newRect.ey = line.ey;
+            let parsedLastLineStartX = parseInt(lastLine.startX, 10);
+            let sameStartY = line.startY === lastLine.startY
+            let sameEndY = line.endY === lastLine.endY
+
+            if ((line.startX === (parsedLastLineStartX + 1)) && (sameStartY && sameEndY)) {
+                newRect.endX = line.endX;
+            } else if ((line.startX === (parsedLastLineStartX - 1)) && (sameStartY && sameEndY)) {
+                newRect.startX = line.startX;
+            } else {
+                rectList.push(new OverlayLine(newRect.startX, newRect.startY, newRect.endX, newRect.endY));
+
+                newRect.startX = line.startX;
+                newRect.startY = line.startY;
+                newRect.endX = line.endX;
+                newRect.endY = line.endY;
+            }
         }
-        lastline.sx = line.sx;
-        lastline.sy = line.sy;
-        lastline.ex = line.ex;
-        lastline.ey = line.ey;
-        LineArr.shift();
-        sortByDistance(LineArr, {x: lastline.sx, y: lastline.sy});
-        line = LineArr[0];
+
+        lastLine.startX = line.startX;
+        lastLine.startY = line.startY;
+        lastLine.endX = line.endX;
+        lastLine.endY = line.endY;
+
+        lineArray.shift();
+        sortByDistance(lineArray, {x: lastLine.startX, y: lastLine.startY});
+        line = lineArray[0];
     }
+
     return rectList;
 }
 
 function drawRectangles(rectList) {
-    let cnt = 0;
-    for (let Orect of rectList) {
-        let w = (Orect.ex - parseInt(Orect.sx, 10) + 1) * 10;
-        let h = (Orect.ey - parseInt(Orect.sy, 10) + 1) * 10;
-        //console.log(`adding rect ${Orect.sx},${Orect.sy},${w},${h}`);
-        addOverlay(viewer, cnt.toString(), Orect.sx, Orect.sy, w, h);
-        cnt++;
+    let count = 0;
+    
+    for (let currentRect of rectList) {
+        let w = (currentRect.endX - parseInt(currentRect.startX, 10) + 1) * 10;
+        let h = (currentRect.endY - parseInt(currentRect.startY, 10) + 1) * 10;
+        //console.log(`adding rect ${currentRect.startX},${currentRect.startY},${w},${h}`);
+        addOverlay(viewer, count.toString(), currentRect.startX, currentRect.startY, w, h);
+        count++;
     }
     //console.log("Rectangles drawn: " + rectList.length);
 }

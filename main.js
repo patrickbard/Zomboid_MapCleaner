@@ -1,12 +1,12 @@
 document.getElementById('addToFolder').addEventListener('click', async () => {
-    let Coords = await getFilearr();
-    let LineArr = CreateLineArray(Coords);
-    let rectList = LineArrToRect(LineArr);
+    let coordinates = await getFileArray();
+    let lineArray = CreateLineArray(coordinates);
+    let rectList = LineArrayToRectanglesArray(lineArray);
     drawRectangles(rectList);
 });
 
 document.getElementById('test').addEventListener('click', async () => {
-    annolist = anno.getAnnotations();
+    let annotationsList = annotorious.getAnnotations();
 
     let deleteMapData = document.getElementById('chk_Mapdata').checked;
     let deleteChunkData = document.getElementById('chk_Chunkdata').checked;
@@ -17,53 +17,54 @@ document.getElementById('test').addEventListener('click', async () => {
         return
     }
 
-    toggleprogressbar(true);
-    areasCleared = 0;
-    AreasToClear = annolist.length;
+    toggleProgressbar(true);
+    let currentAreaBeingCleared = 1;
+    let areasToClear = annotationsList.length;
 
-    for (let an of annolist) {
-        rectinfo = annoCoordToPZCoord(an.target.selector.value)
-        //console.log(rectinfo.sx, rectinfo.sy, rectinfo.ex, rectinfo.ey);
-        //console.log(rectinfo.sx / 30, rectinfo.sy / 30, rectinfo.ex / 30, rectinfo.ey / 30);
-        let FilesToCheck = (rectinfo.ex - rectinfo.sx) * (rectinfo.ey - rectinfo.sy) + 1
+    for (let an of annotationsList) {
+        let rectInfo = annotationCoordToPZCoord(an.target.selector.value)
+        let filesToCheck = (rectInfo.endX - rectInfo.startX) * (rectInfo.endY - rectInfo.startY) + 1
         let filesChecked = 0;
-        for (let i = rectinfo.sx; i < rectinfo.ex; i++) {
-            for (let j = rectinfo.sy; j < rectinfo.ey; j++) {
+
+        for (let i = rectInfo.startX; i < rectInfo.endX; i++) {
+            for (let j = rectInfo.startY; j < rectInfo.endY; j++) {
                 filesChecked++;
                 try {
                     if (deleteMapData == true) {
                         try {
-                            await directory.removeEntry(CoordinateToFileName(i, j, "M"));
+                            await directory.removeEntry(coordinateToFileName(i, j, "M"));
                         } catch (e) {
+                            console.error(e);
                         }
                     }
                     if (deleteChunkData == true) {
                         try {
-                            await directory.removeEntry(CoordinateToFileName(i, j, "C"));
+                            await directory.removeEntry(coordinateToFileName(i, j, "C"));
                         } catch (e) {
+                            console.error(e);
                         }
                     }
                     if (deleteZPopData == true) {
                         try {
-                            await directory.removeEntry(CoordinateToFileName(i, j, "Z"));
+                            await directory.removeEntry(coordinateToFileName(i, j, "Z"));
                         } catch (e) {
+                            console.error(e);
                         }
                     }
                 } catch (e) {
+                    console.error(e)
                 }
             }
-            updateProgressBar(FilesToCheck, filesChecked, AreasToClear, areasCleared)
+            updateProgressBar(filesToCheck, filesChecked, areasToClear, currentAreaBeingCleared)
         }
-        areasCleared++;
+        currentAreaBeingCleared++;
     }
 
-    let Coords = await reloadFileArr();
+    let coordinates = await getFileArray(true);
     viewer.clearOverlays();
-    let LineArr = CreateLineArray(Coords);
-    let rectList = LineArrToRect(LineArr);
+    let lineArray = CreateLineArray(coordinates);
+    let rectList = LineArrayToRectanglesArray(lineArray);
+
     drawRectangles(rectList);
-
-    toggleprogressbar(false);
-
-
+    toggleProgressbar(false);
 });
