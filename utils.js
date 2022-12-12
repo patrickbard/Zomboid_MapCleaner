@@ -178,6 +178,31 @@ function updateProgressBarWhenLoadingFiles(filesToCheck, filesChecked) {
 }
 
 
+function createRectanglesForSafehouses(safehousesText, margin = 0) {
+    let lines = safehousesText.split(/\n/);
+    let rectanglesArray = [];
+
+    for (const line of lines) {
+        let coordinates = line.split(/[xX,-\/\s]/);
+        let startX = parseInt(coordinates[0])
+        let startY = parseInt(coordinates[1])
+        let endX = parseInt(coordinates[2])
+        let endY = parseInt(coordinates[3])
+        
+        if (isNumeric(startX) && isNumeric(startY) && isNumeric(endX) && isNumeric(endY)) {
+            let overlayLine = new OverlayLine(startX, startY, endX, endY);
+            
+            if (margin > 0) {
+                overlayLine = new OverlayLine(startX-margin, startY-margin, endX+margin, endY+margin);
+            }
+            
+            rectanglesArray.push(overlayLine);
+        }
+    }
+    
+    return rectanglesArray;
+}
+
 String.prototype.format = function() {
     let args = arguments;
     return this.replace(/{(\d+)}/g, function(match, number) {

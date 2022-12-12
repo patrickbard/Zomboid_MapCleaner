@@ -52,3 +52,31 @@
 .card.m-3 {
     margin: 0.5rem!important;
 }
+
+#safehouses-slider-component {
+    width: 100%;
+}
+
+#safehouses-slider-component .slider-selection {
+    background: #828cff;
+}
+#safehouses-slider-component .slider-handle {
+    background: #001dcc;
+}
+
+.modal-dialog {
+    max-width: 800px;
+}
+
+#safehouses-preview {
+    height: 400px;
+}
+
+code {
+    padding: 0.2rem 0.4rem;
+    font-size: 87.5%;
+    text-align: center;
+    color: #fff;
+    background-color: #818181;
+    border-radius: 0.2rem;
+}
