@@ -289,7 +289,7 @@ async function checkMapToDelete(area,
                                 safehousesAreas,
                                 areasToProcess,
                                 currentAreaBeingProcessed) {
-    let filesToCheck = (area.endX - area.startX) * (area.endY - area.startY) + 1
+    let filesToCheck = window.fileCoordinates[FILE_TYPE_PREFIX.MAP].length
     let verifications = 0;
     let filesChecked = 0;
 
