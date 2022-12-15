@@ -480,13 +480,13 @@ document.getElementById('test').addEventListener('click', async () => {
         }
     }
 
-    // window.fileCoordinates = await getFileArray(true);
-    // viewer.clearOverlays();
-    // annotorious.clearAnnotations();
+    window.fileCoordinates = await getFileArray(true);
+    viewer.clearOverlays();
+    annotorious.clearAnnotations();
 
-    // drawZones(fileCoordinates, FILE_TYPE_PREFIX.MAP, "rgba(0, 255, 0, 0.25)");
-    // drawZones(fileCoordinates, FILE_TYPE_PREFIX.CHUNK, "rgba(255,213,0,0.25)");
-    // drawZones(fileCoordinates, FILE_TYPE_PREFIX.ZOMBIE, "rgba(232,0,0,0.25)");
+    drawZones(fileCoordinates, FILE_TYPE_PREFIX.MAP, "rgba(0, 255, 0, 0.25)");
+    drawZones(fileCoordinates, FILE_TYPE_PREFIX.CHUNK, "rgba(255,213,0,0.25)");
+    drawZones(fileCoordinates, FILE_TYPE_PREFIX.ZOMBIE, "rgba(232,0,0,0.25)");
 
     toggleProgressbar(false);
 });
