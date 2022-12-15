@@ -22,6 +22,8 @@ const FILE_TYPE_PREFIX = {
     ZOMBIE: "zpop_",
 };
 
+const FILE_TYPE_PREFIX_VALUES_ARRAY = Object.values(FILE_TYPE_PREFIX);
+
 const getFileType = (val) => Object.entries(FILE_TYPE_PREFIX).find(([_, value]) => value === val)[0];
 
 function makePZCoord(coord) {

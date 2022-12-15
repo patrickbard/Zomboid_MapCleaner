@@ -123,14 +123,18 @@ function hasFileCoordinate(x, y, filetype) {
     return window.fileCoordinates[filetype].some((coordinate) => coordinate.x == x && coordinate.y == y)
 }
 
+function hasCoordinate(x, y) {
+    return FILE_TYPE_PREFIX_VALUES_ARRAY.some((filetype) => hasFileCoordinate(x, y, filetype))
+}
+
 async function deleteData(x, y, filetype) {
     try {
-        if (hasFileCoordinate(x, y, filetype)) {
-            // let fileName = coordinateToFileName(x, y, filetype);
+        // if (hasFileCoordinate(x, y, filetype)) {
             // console.log(`Found file ${fileName}`)
             // await new Promise(resolve => setTimeout(resolve, 10));
-            await directory.removeEntry(fileName);
-        }
+        let fileName = coordinateToFileName(x, y, filetype);
+        await directory.removeEntry(fileName);
+        // }
     } catch (e) {
         console.error(e);
     }
@@ -141,11 +145,206 @@ async function deleteMapData(x, y) {
 }
 
 async function deleteChunkData(x, y) {
+    console.log(`Deleting chunk data at ${x/30}x${y/30}`)
     await deleteData(x, y, FILE_TYPE_PREFIX.CHUNK);
 }
 
 async function deleteZombiePopulationData(x, y) {
+    console.log(`Deleting zombie population at ${x/30}x${y/30}`)
     await deleteData(x, y, FILE_TYPE_PREFIX.ZOMBIE);
+}
+
+async function checkChunkToDelete(area,
+                                  shouldDeleteMapData,
+                                  shouldDeleteChunkData,
+                                  shouldDeleteZombieData,
+                                  shouldKeepSafehouses,
+                                  safehousesAreas) {
+    let lastChunkContainSafehouse;
+    let lastChunkX = 0;
+    let lastChunkY = 0;
+    let verificationsChunk = 0;
+    let verificationsZombie = 0;
+    let chunksVerified = 0;
+    let filesChecked = 0;
+
+    // for (let i = area.startX; i <= area.endX; i += 30) {
+    //     let chunkX = Math.floor(i / 30) * 30;
+    //
+    //     // Loop to take care of chunks
+    //     for (let j = area.startY; j <= area.endY; j += 30) {
+    //         let chunkY = Math.floor(j / 30) * 30;
+    //         chunksVerified++;
+    //
+    //         if (!hasFileCoordinate(chunkX, chunkY, FILE_TYPE_PREFIX.CHUNK) && !hasFileCoordinate(chunkX, chunkY, FILE_TYPE_PREFIX.ZOMBIE)) {
+    //             continue;
+    //         }
+    //
+    //         console.log(`\nChunk ${ chunkX/30 }x${ chunkY/30 } exists\n`);
+    //
+    //         if (shouldKeepSafehouses) {
+    //             if (lastChunkContainSafehouse && (chunkX == lastChunkX && chunkY == lastChunkY)) {
+    //                 continue;
+    //             }
+    //
+    //             let isChunkContainSafehouse = safehousesAreas.some((safehouse) => isChunkContainArea(chunkX, chunkY, safehouse));
+    //             lastChunkContainSafehouse = isChunkContainSafehouse
+    //
+    //             if (isChunkContainSafehouse) {
+    //                 lastChunkX = chunkX;
+    //                 lastChunkY = chunkY;
+    //                 continue;
+    //             }
+    //         }
+    //
+    //         try {
+    //             if (chunkX > lastChunkX || chunkY > lastChunkY) {
+    //                 if (shouldDeleteChunkData === true) {
+    //                     await deleteChunkData(chunkX, chunkY);
+    //                 }
+    //                 if (shouldDeleteZombieData === true) {
+    //                     await deleteZombiePopulationData(chunkX, chunkY)
+    //                 }
+    //
+    //                 lastChunkX = chunkX;
+    //                 lastChunkY = chunkY;
+    //             }
+    //         } catch (e) {
+    //             console.error(e)
+    //         }
+    //     }
+    // }
+
+    if (shouldDeleteChunkData) {
+        for (const coordinate of window.fileCoordinates[FILE_TYPE_PREFIX.CHUNK]) {
+            verificationsChunk++
+            if (isInsideArea(area, coordinate.x, coordinate.y)) {
+                chunksVerified++;
+
+                if (shouldKeepSafehouses) {
+                    if (lastChunkContainSafehouse && (coordinate.x == lastChunkX && coordinate.y == lastChunkY)) {
+                        continue;
+                    }
+
+                    let isChunkContainSafehouse = safehousesAreas.some((safehouse) => isChunkContainArea(coordinate.x, coordinate.y, safehouse));
+                    lastChunkContainSafehouse = isChunkContainSafehouse
+
+                    if (isChunkContainSafehouse) {
+                        lastChunkX = coordinate.x;
+                        lastChunkY = coordinate.y;
+                        continue;
+                    }
+                }
+
+                try {
+                    await deleteChunkData(coordinate.x, coordinate.y);
+                } catch (e) {
+                    console.error(e)
+                }
+            }
+        }
+    }
+
+    if (shouldDeleteZombieData) {
+        for (const coordinate of window.fileCoordinates[FILE_TYPE_PREFIX.ZOMBIE]) {
+            verificationsZombie++
+            if (isInsideArea(area, coordinate.x, coordinate.y)) {
+                filesChecked++;
+
+                if (shouldKeepSafehouses) {
+                    if (lastChunkContainSafehouse && (coordinate.x == lastChunkX && coordinate.y == lastChunkY)) {
+                        continue;
+                    }
+
+                    let isChunkContainSafehouse = safehousesAreas.some((safehouse) => isChunkContainArea(coordinate.x, coordinate.y, safehouse));
+                    lastChunkContainSafehouse = isChunkContainSafehouse
+
+                    if (isChunkContainSafehouse) {
+                        lastChunkX = coordinate.x;
+                        lastChunkY = coordinate.y;
+                        continue;
+                    }
+                }
+
+                try {
+                    await deleteZombiePopulationData(coordinate.x, coordinate.y);
+                } catch (e) {
+                    console.error(e)
+                }
+            }
+        }
+    }
+
+    console.log(`verificationsChunk: ${verificationsChunk}`)
+    console.log(`verificationsZombie: ${verificationsZombie}`)
+    console.log(`chunksVerified: ${chunksVerified}`)
+    console.log(`filesChecked: ${filesChecked}`)
+}
+
+async function checkMapToDelete(area,
+                                shouldDeleteMapData,
+                                shouldDeleteChunkData,
+                                shouldDeleteZombieData,
+                                shouldKeepSafehouses,
+                                safehousesAreas,
+                                areasToProcess,
+                                currentAreaBeingProcessed) {
+    let filesToCheck = (area.endX - area.startX) * (area.endY - area.startY) + 1
+    let verifications = 0;
+    let filesChecked = 0;
+
+    // for (let i = area.startX; i <= area.endX; i++) {
+    //     for (let j = area.startY; j <= area.endY; j++) {
+    //         verifications++;
+    //
+    //         if (!hasFileCoordinate(i, j, FILE_TYPE_PREFIX.MAP)) {
+    //             continue;
+    //         }
+    //
+    //         filesChecked++;
+    //
+    //         if (shouldKeepSafehouses) {
+    //             let isInsideSafehouse = safehousesAreas.some((safehouse) => isInsideArea(safehouse, i, j));
+    //
+    //             if (isInsideSafehouse) {
+    //                 continue;
+    //             }
+    //         }
+    //
+    //         try {
+    //             await deleteMapData(i, j);
+    //         } catch (e) {
+    //             console.error(e)
+    //         }
+    //     }
+    //     updateProgressBarWhenRemovingFiles(filesToCheck, filesChecked, areasToProcess, currentAreaBeingProcessed)
+    // }
+
+    for (const coordinate of window.fileCoordinates[FILE_TYPE_PREFIX.MAP]) {
+        verifications++
+        if (isInsideArea(area, coordinate.x, coordinate.y)) {
+            filesChecked++;
+
+            if (shouldKeepSafehouses) {
+                let isInsideSafehouse = safehousesAreas.some((safehouse) => isInsideArea(safehouse, coordinate.x, coordinate.y));
+
+                if (isInsideSafehouse) {
+                    continue;
+                }
+            }
+
+            try {
+                await deleteMapData(coordinate.x, coordinate.y);
+            } catch (e) {
+                console.error(e)
+            }
+
+            updateProgressBarWhenRemovingFiles(filesToCheck, filesChecked, areasToProcess, currentAreaBeingProcessed)
+        }
+    }
+
+    console.log(`verifications: ${verifications}`)
+    console.log(`filesChecked: ${filesChecked}`)
 }
 
 async function deleteDataInsideArea(area,
@@ -156,72 +355,32 @@ async function deleteDataInsideArea(area,
                                     safehousesAreas,
                                     areasToProcess,
                                     currentAreaBeingProcessed) {
-    let filesToCheck = (area.endX - area.startX) * (area.endY - area.startY) + 1
-    let filesChecked = 0;
-    let lastChunkX = 0;
-    let lastChunkY = 0;
-    let lastChunkContainSafehouse;
+    let timeStart = performance.now();
 
-    for (let i = area.startX; i <= area.endX; i++) {
-        let chunkX = Math.floor(i / 30) * 30;
+    await checkChunkToDelete(area,
+        shouldDeleteMapData,
+        shouldDeleteChunkData,
+        shouldDeleteZombieData,
+        shouldKeepSafehouses,
+        safehousesAreas);
 
-        // Loop to take care of chunks
-        for (let j = area.startY; j <= area.endY; j++) {
-            let chunkY = Math.floor(j / 30) * 30;
+    let timeEnd = performance.now();
+    console.log(`checkChunkToDelete took ${timeEnd-timeStart}`)
+    
+    if (shouldDeleteMapData) {
+        let timeStart = performance.now();
 
-            if (shouldKeepSafehouses) {
-                if (lastChunkContainSafehouse && (chunkX == lastChunkX && chunkY == lastChunkY)) {
-                    continue;
-                }
+        await checkMapToDelete(area,
+            shouldDeleteMapData,
+            shouldDeleteChunkData,
+            shouldDeleteZombieData,
+            shouldKeepSafehouses,
+            safehousesAreas,
+            areasToProcess,
+            currentAreaBeingProcessed);
 
-                let isChunkContainSafehouse = safehousesAreas.some((safehouse) => isChunkContainArea(chunkX, chunkY, safehouse));
-                lastChunkContainSafehouse = isChunkContainSafehouse
-
-                if (isChunkContainSafehouse) {
-                    lastChunkX = chunkX;
-                    lastChunkY = chunkY;
-                    continue;
-                }
-            }
-
-            try {
-                if (chunkX > lastChunkX || chunkY > lastChunkY) {
-                    if (shouldDeleteChunkData === true) {
-                        await deleteChunkData(chunkX, chunkY);
-                    }
-                    if (shouldDeleteZombieData === true) {
-                        await deleteZombiePopulationData(chunkX, chunkY)
-                    }
-
-                    lastChunkX = chunkX;
-                    lastChunkY = chunkY;
-                }
-            } catch (e) {
-                console.error(e)
-            }
-        }
-
-        // Loop to take care of individual coordinates
-        for (let j = area.startY; j <= area.endY; j++) {
-            filesChecked++;
-
-            if (shouldKeepSafehouses) {
-                let isInsideSafehouse = safehousesAreas.some((safehouse) => isInsideArea(safehouse, i, j));
-
-                if (isInsideSafehouse) {
-                    continue;
-                }
-            }
-
-            try {
-                if (shouldDeleteMapData === true) {
-                    await deleteMapData(i, j);
-                }
-            } catch (e) {
-                console.error(e)
-            }
-        }
-        updateProgressBarWhenRemovingFiles(filesToCheck, filesChecked, areasToProcess, currentAreaBeingProcessed)
+        let timeEnd = performance.now();
+        console.log(`checkMapToDelete took ${timeEnd-timeStart}`)
     }
 }
 
